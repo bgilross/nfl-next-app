@@ -1,0 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Team {
+  id        Int            @id @default(autoincrement())
+  name      String         @unique
+  snapshots StatSnapshot[]
+}
+
+model Category {
+  id        Int            @id @default(autoincrement())
+  slug      String         @unique
+  name      String
+  snapshots StatSnapshot[]
+}
+
+/// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
+model StatSnapshot {
+  id           Int      @id @default(autoincrement())
+  teamId       Int
+  categoryId   Int
+  createdAt    DateTime @default(now()) @db.Timestamp(6)
+  seasonYear   Int?
+  currentYear  Int?
+  prevYear     Int?
+  valueCurrent Float?
+  valuePrev    Float?
+  last1        Float?
+  last3        Float?
+  home         Float?
+  away         Float?
+  rank         Int?
+  category     Category @relation(fields: [categoryId], references: [id], onDelete: Cascade, map: "StatSnapshot_category_fkey")
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade, map: "StatSnapshot_team_fkey")
+
+  @@index([categoryId, seasonYear], map: "StatSnapshot_category_season_idx")
+  @@index([teamId, categoryId, createdAt], map: "StatSnapshot_team_category_created_idx")
+}
